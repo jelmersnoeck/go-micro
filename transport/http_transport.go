@@ -25,7 +25,8 @@ type buffer struct {
 }
 
 type httpTransport struct {
-	opts Options
+	opts    Options
+	clients map[string]Client
 }
 
 type httpTransportClient struct {
@@ -352,6 +353,10 @@ func (h *httpTransportListener) Accept(fn func(Socket)) error {
 }
 
 func (h *httpTransport) Dial(addr string, opts ...DialOption) (Client, error) {
+	if c, ok := h.clients[addr]; ok {
+		return c, nil
+	}
+
 	dopts := DialOptions{
 		Timeout: DefaultDialTimeout,
 	}
