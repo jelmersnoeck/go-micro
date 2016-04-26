@@ -25,6 +25,7 @@ type buffer struct {
 }
 
 type httpTransport struct {
+	*sync.Mutex
 	opts    Options
 	clients map[string]Client
 }
@@ -353,7 +354,10 @@ func (h *httpTransportListener) Accept(fn func(Socket)) error {
 }
 
 func (h *httpTransport) Dial(addr string, opts ...DialOption) (Client, error) {
-	if c, ok := h.clients[addr]; ok {
+	h.Lock()
+	c, ok := h.clients[addr]
+	h.Unlock()
+	if ok {
 		return c, nil
 	}
 
@@ -385,14 +389,19 @@ func (h *httpTransport) Dial(addr string, opts ...DialOption) (Client, error) {
 		return nil, err
 	}
 
-	return &httpTransportClient{
+	cl := &httpTransportClient{
 		ht:       h,
 		addr:     addr,
 		conn:     conn,
 		buff:     bufio.NewReader(conn),
 		dialOpts: dopts,
 		r:        make(chan *http.Request, 1),
-	}, nil
+	}
+
+	h.Lock()
+	h.clients[addr] = cl
+	h.Unlock()
+	return cl, nil
 }
 
 func (h *httpTransport) Listen(addr string, opts ...ListenOption) (Listener, error) {
@@ -446,5 +455,9 @@ func newHTTPTransport(opts ...Option) *httpTransport {
 	for _, o := range opts {
 		o(&options)
 	}
-	return &httpTransport{opts: options}
+	return &httpTransport{
+		opts:    options,
+		clients: map[string]Client{},
+		Mutex:   &sync.Mutex{},
+	}
 }
