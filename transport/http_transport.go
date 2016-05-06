@@ -169,6 +169,10 @@ func (h *httpTransportClient) Recv(m *Message) error {
 	}
 	defer rsp.Body.Close()
 
+	if rsp.StatusCode != 200 {
+		return errors.New("Invalid response")
+	}
+
 	b, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		return err
