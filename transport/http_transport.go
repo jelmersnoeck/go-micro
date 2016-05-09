@@ -16,7 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lostmyname/golumn/log"
 	mls "github.com/micro/misc/lib/tls"
 )
 
@@ -175,8 +174,7 @@ func (h *httpTransportClient) Recv(m *Message) error {
 	}
 
 	if b[0] == "T" || b[0] == "t" {
-		berr = errors.New(fmt.Sprintf("Errored body with status code %d", rsp.StatusCode))
-		log.Error(berr, "reading body")
+		fmt.Sprintf("Errored body with status code %d\n", rsp.StatusCode)
 	}
 
 	if rsp.StatusCode != 200 {
