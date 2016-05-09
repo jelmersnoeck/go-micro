@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lostmyname/golumn/log"
 	mls "github.com/micro/misc/lib/tls"
 )
 
@@ -174,6 +174,11 @@ func (h *httpTransportClient) Recv(m *Message) error {
 		return err
 	}
 
+	if b[0] == "T" || b[0] == "t" {
+		berr = errors.New(fmt.Sprintf("Errored body with status code %d", rsp.StatusCode))
+		log.Error(berr, "reading body")
+	}
+
 	if rsp.StatusCode != 200 {
 		return errors.New(rsp.Status + ": " + string(b))
 	}
@@ -329,7 +334,7 @@ func (h *httpTransportListener) Accept(fn func(Socket)) error {
 				if max := 1 * time.Second; tempDelay > max {
 					tempDelay = max
 				}
-				log.Printf("http: Accept error: %v; retrying in %v\n", err, tempDelay)
+				//log.Printf("http: Accept error: %v; retrying in %v\n", err, tempDelay)
 				time.Sleep(tempDelay)
 				continue
 			}
