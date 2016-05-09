@@ -173,7 +173,7 @@ func (h *httpTransportClient) Recv(m *Message) error {
 		return err
 	}
 
-	if b[0] == "T" || b[0] == "t" {
+	if string(b[0]) == "T" || string(b[0]) == "t" {
 		fmt.Sprintf("Errored body with status code %d\n", rsp.StatusCode)
 	}
 
