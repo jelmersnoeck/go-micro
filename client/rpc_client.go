@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lostmyname/golumn/metrics"
 	"github.com/micro/go-micro/broker"
 	"github.com/micro/go-micro/codec"
 	"github.com/micro/go-micro/errors"
@@ -52,6 +53,7 @@ func (r *rpcClient) newCodec(contentType string) (codec.NewCodec, error) {
 }
 
 func (r *rpcClient) call(ctx context.Context, address string, req Request, resp interface{}, opts CallOptions) error {
+	defer metrics.NewTiming().Send("micro.client.call.time")
 	msg := &transport.Message{
 		Header: make(map[string]string),
 	}
