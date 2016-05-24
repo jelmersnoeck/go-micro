@@ -5,6 +5,8 @@ import (
 	"io"
 	"sync"
 
+	"github.com/lostmyname/golumn/metrics"
+
 	"golang.org/x/net/context"
 )
 
@@ -70,6 +72,7 @@ func (r *rpcStream) Recv(msg interface{}) error {
 		return errShutdown
 	}
 
+	rrhs := metrics.NewTiming()
 	var resp response
 	if err := r.codec.ReadResponseHeader(&resp); err != nil {
 		if err == io.EOF && !r.isClosed() {
@@ -79,9 +82,11 @@ func (r *rpcStream) Recv(msg interface{}) error {
 		r.err = err
 		return err
 	}
+	rrhs.Send("micro.client.stream.recv.readresponse.time")
 
 	switch {
 	case len(resp.Error) > 0:
+		rehs := metrics.NewTiming()
 		// We've got an error response. Give this to the request;
 		// any subsequent requests will get the ReadResponseBody
 		// error if there is one.
@@ -90,13 +95,18 @@ func (r *rpcStream) Recv(msg interface{}) error {
 		} else {
 			r.err = io.EOF
 		}
+		rehrrs := metrics.NewTiming()
 		if err := r.codec.ReadResponseBody(nil); err != nil {
 			r.err = errors.New("reading error payload: " + err.Error())
 		}
+		rehrrs.Send("micro.client.stream.recv.error.readresponsebody.time")
+		rehs.Send("micro.client.stream.recv.error.response.time")
 	default:
+		rnehs := metrics.NewTiming()
 		if err := r.codec.ReadResponseBody(msg); err != nil {
 			r.err = errors.New("reading body " + err.Error())
 		}
+		rnehs.Send("micro.client.stream.recv.noerror.resonse.time")
 	}
 
 	return r.err
