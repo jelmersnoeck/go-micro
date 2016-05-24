@@ -102,6 +102,7 @@ func (r *BlackList) Filter(services []*registry.Service) ([]*registry.Service, e
 }
 
 func (r *BlackList) Mark(service string, node *registry.Node, err error) {
+	return
 	r.Lock()
 	defer r.Unlock()
 
