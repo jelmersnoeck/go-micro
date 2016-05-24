@@ -54,6 +54,7 @@ func (r *BlackList) Reset(service string) {
 }
 
 func (r *BlackList) Close() error {
+	return nil
 }
 
 func New() *BlackList {
