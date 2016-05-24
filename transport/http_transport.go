@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lostmyname/golumn/metrics"
 	mls "github.com/micro/misc/lib/tls"
 )
 
@@ -158,21 +159,27 @@ func (h *httpTransportClient) Recv(m *Message) error {
 	}
 
 	h.Lock()
+	defer metrics.NewTiming().Send("micro.transport.http.recv.time")
 	defer h.Unlock()
 	if h.buff == nil {
 		return io.EOF
 	}
 
+	hrrs := metrics.NewTiming()
 	rsp, err := http.ReadResponse(h.buff, r)
 	if err != nil {
 		return err
 	}
 	defer rsp.Body.Close()
+	hrrs.Send("micro.transport.http.recv.readresponse.time")
 
+	hras := metrics.NewTiming()
 	b, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		return err
 	}
+	hras.Send("micro.transport.http.recv.readall.time")
+	metrics.Gauge("micro.transport.http.recv.readall.length", len(b))
 
 	if rsp.StatusCode != 200 {
 		return errors.New(rsp.Status + ": " + string(b))

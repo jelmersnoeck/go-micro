@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 
+	"github.com/lostmyname/golumn/metrics"
 	"github.com/micro/go-micro/codec"
 	"github.com/micro/go-micro/codec/jsonrpc"
 	"github.com/micro/go-micro/codec/protorpc"
@@ -123,9 +124,11 @@ func (c *rpcPlusCodec) WriteRequest(req *request, body interface{}) error {
 
 func (c *rpcPlusCodec) ReadResponseHeader(r *response) error {
 	var m transport.Message
+	ccrs := metrics.NewTiming()
 	if err := c.client.Recv(&m); err != nil {
 		return err
 	}
+	ccrs.Send("micro.client.codec.readresponseheader.client.recv.time")
 	c.buf.rbuf.Reset()
 	c.buf.rbuf.Write(m.Body)
 	var me codec.Message
