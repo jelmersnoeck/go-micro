@@ -3,6 +3,8 @@ package protorpc
 import (
 	"encoding/binary"
 	"io"
+
+	"github.com/lostmyname/golumn/metrics"
 )
 
 // WriteNetString writes data to a big-endian netstring on a Writer.
@@ -18,6 +20,7 @@ func WriteNetString(w io.Writer, data []byte) (written int, err error) {
 
 // ReadNetString reads data from a big-endian netstring.
 func ReadNetString(r io.Reader) (data []byte, err error) {
+	defer metrics.NewTiming().Send("micro.protorpc.netstring.readnetstring.time")
 	sizeBuf := make([]byte, 4)
 	_, err = r.Read(sizeBuf)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/lostmyname/golumn/metrics"
 	"github.com/micro/go-micro/codec"
 )
 
@@ -97,15 +98,20 @@ func (c *protoCodec) Write(m *codec.Message, b interface{}) error {
 }
 
 func (c *protoCodec) ReadHeader(m *codec.Message, mt codec.MessageType) error {
+	rhbrs := metrics.NewTiming()
 	c.buf.Reset()
+	rhbrs.Send("micro.protorpc.readheader.buf.reset.time")
 	c.mt = mt
 
 	switch mt {
 	case codec.Request:
+		rhrnss := metrics.NewTiming()
 		data, err := ReadNetString(c.rwc)
 		if err != nil {
 			return err
 		}
+		rhrnss.Send("micro.protorpc.readheader.readnetstring.time")
+		rhpus := metrics.NewTiming()
 		rtmp := new(Request)
 		err = proto.Unmarshal(data, rtmp)
 		if err != nil {
@@ -113,6 +119,7 @@ func (c *protoCodec) ReadHeader(m *codec.Message, mt codec.MessageType) error {
 		}
 		m.Method = rtmp.GetServiceMethod()
 		m.Id = rtmp.GetSeq()
+		rhpus.Send("micro.protorpc.readheader.protounmarshal.time")
 	case codec.Response:
 		data, err := ReadNetString(c.rwc)
 		if err != nil {
