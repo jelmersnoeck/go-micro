@@ -67,12 +67,16 @@ func (r *rpcClient) call(ctx context.Context, address string, req Request, resp 
 
 	msg.Header["Content-Type"] = req.ContentType()
 
+	ncs := metrics.NewTiming()
 	cf, err := r.newCodec(req.ContentType())
+	ncs.Send("micro.client.call.codec.new.time")
 	if err != nil {
 		return errors.InternalServerError("go.micro.client", err.Error())
 	}
 
+	ds := metrics.NewTiming()
 	c, err := r.opts.Transport.Dial(address, transport.WithTimeout(opts.DialTimeout))
+	ds.Send("micro.client.call.dial.time")
 	if err != nil {
 		return errors.InternalServerError("go.micro.client", fmt.Sprintf("Error sending request: %v", err))
 	}
@@ -91,16 +95,20 @@ func (r *rpcClient) call(ctx context.Context, address string, req Request, resp 
 		defer stream.Close()
 
 		// send request
+		css := metrics.NewTiming()
 		if err := stream.Send(req.Request()); err != nil {
 			ch <- err
 			return
 		}
+		css.Send("micro.client.call.stream.send.time")
 
 		// recv request
+		csr := metrics.NewTiming()
 		if err := stream.Recv(resp); err != nil {
 			ch <- err
 			return
 		}
+		css.Send("micro.client.call.stream.receive.time")
 
 		// success
 		ch <- nil
@@ -134,7 +142,9 @@ func (r *rpcClient) stream(ctx context.Context, address string, req Request, opt
 		return nil, errors.InternalServerError("go.micro.client", err.Error())
 	}
 
+	ds := metrics.NewTiming()
 	c, err := r.opts.Transport.Dial(address, transport.WithStream(), transport.WithTimeout(opts.DialTimeout))
+	ds.Send("micro.client.stream.dial.time")
 	if err != nil {
 		return nil, errors.InternalServerError("go.micro.client", fmt.Sprintf("Error sending request: %v", err))
 	}
@@ -191,7 +201,9 @@ func (r *rpcClient) Call(ctx context.Context, request Request, response interfac
 		opt(&callOpts)
 	}
 
+	sss := metrics.NewTiming()
 	next, err := r.opts.Selector.Select(request.Service(), callOpts.SelectOptions...)
+	sss.Send("micro.client.call.selector.select.time")
 	if err != nil && err == selector.ErrNotFound {
 		return errors.NotFound("go.micro.client", err.Error())
 	} else if err != nil {
@@ -212,7 +224,9 @@ func (r *rpcClient) Call(ctx context.Context, request Request, response interfac
 			time.Sleep(t)
 		}
 
+		nns := metrics.NewTiming()
 		node, err := next()
+		nns.Send("micro.client.call.node.next.time")
 		if err != nil && err == selector.ErrNotFound {
 			return errors.NotFound("go.micro.client", err.Error())
 		} else if err != nil {
@@ -225,7 +239,9 @@ func (r *rpcClient) Call(ctx context.Context, request Request, response interfac
 		}
 
 		grr = r.call(ctx, address, request, response, callOpts)
+		sms := metrics.NewTiming()
 		r.opts.Selector.Mark(request.Service(), node, grr)
+		sms.Send("micro.client.call.selector.mark.time")
 
 		// if the call succeeded lets bail early
 		if grr == nil {
