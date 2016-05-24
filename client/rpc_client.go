@@ -108,7 +108,7 @@ func (r *rpcClient) call(ctx context.Context, address string, req Request, resp 
 			ch <- err
 			return
 		}
-		css.Send("micro.client.call.stream.receive.time")
+		csr.Send("micro.client.call.stream.receive.time")
 
 		// success
 		ch <- nil
