@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lostmyname/golumn/log"
 	"github.com/lostmyname/golumn/metrics"
 	mls "github.com/micro/misc/lib/tls"
 )
@@ -183,7 +183,7 @@ func (h *httpTransportClient) Recv(m *Message) error {
 	hras.Send("micro.transport.http.recv.readall.time")
 	metrics.Gauge("micro.transport.http.recv.readall.length", len(b))
 
-	if time.Now().Sub(start).Seconds > 3 {
+	if time.Now().Sub(start).Seconds > float64(3) {
 		timeErr := errors.New(string(b))
 		log.Error(timeErr, "Transport client slow reads")
 	}
@@ -343,7 +343,7 @@ func (h *httpTransportListener) Accept(fn func(Socket)) error {
 				if max := 1 * time.Second; tempDelay > max {
 					tempDelay = max
 				}
-				log.Printf("http: Accept error: %v; retrying in %v\n", err, tempDelay)
+				//log.Printf("http: Accept error: %v; retrying in %v\n", err, tempDelay)
 				time.Sleep(tempDelay)
 				continue
 			}
