@@ -173,7 +173,7 @@ func (h *httpTransportClient) Recv(m *Message) error {
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != 200 {
-		return errors.New(rsp.Status + ": " + http.StatusText(rsp.Status))
+		return errors.New(rsp.Status + ": " + http.StatusText(rsp.StatusCode))
 	}
 
 	hrrs.Send("micro.transport.http.recv.readresponse.time")
