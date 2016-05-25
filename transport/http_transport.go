@@ -158,9 +158,7 @@ func (h *httpTransportClient) Recv(m *Message) error {
 		r = rc
 	}
 
-	h.Lock()
 	defer metrics.NewTiming().Send("micro.transport.http.recv.time")
-	defer h.Unlock()
 	if h.buff == nil {
 		return io.EOF
 	}
@@ -171,11 +169,6 @@ func (h *httpTransportClient) Recv(m *Message) error {
 		return err
 	}
 	defer rsp.Body.Close()
-
-	if rsp.StatusCode != 200 {
-		log.Printf("Transport client slow reads status code (%d)", rsp.StatusCode)
-		return errors.New(rsp.Status + ": " + http.StatusText(rsp.StatusCode))
-	}
 
 	hrrs.Send("micro.transport.http.recv.readresponse.time")
 
@@ -188,6 +181,11 @@ func (h *httpTransportClient) Recv(m *Message) error {
 	hras.Send("micro.transport.http.recv.readall.time")
 	metrics.Gauge("micro.transport.http.recv.readall.length", len(b))
 	log.Printf("Transport client slow reads (%d)", len(b))
+
+	if rsp.StatusCode != 200 {
+		log.Printf("Transport client slow reads status code (%d)", rsp.StatusCode)
+		return errors.New(rsp.Status + ": " + string(b))
+	}
 
 	mr := &Message{
 		Header: make(map[string]string),
