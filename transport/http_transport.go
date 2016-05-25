@@ -166,7 +166,6 @@ func (h *httpTransportClient) Recv(m *Message) error {
 	}
 
 	hrrs := metrics.NewTiming()
-	startTime := time.Now()
 	rsp, err := http.ReadResponse(h.buff, r)
 	if err != nil {
 		return err
