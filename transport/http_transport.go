@@ -173,6 +173,7 @@ func (h *httpTransportClient) Recv(m *Message) error {
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != 200 {
+		log.Printf("Transport client slow reads status code (%d)", rsp.StatusCode)
 		return errors.New(rsp.Status + ": " + http.StatusText(rsp.StatusCode))
 	}
 
