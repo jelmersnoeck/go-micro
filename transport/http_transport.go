@@ -158,7 +158,9 @@ func (h *httpTransportClient) Recv(m *Message) error {
 		r = rc
 	}
 
+	h.Lock()
 	defer metrics.NewTiming().Send("micro.transport.http.recv.time")
+	defer h.Unlock()
 	if h.buff == nil {
 		return io.EOF
 	}
