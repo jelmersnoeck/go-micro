@@ -178,14 +178,12 @@ func (h *httpTransportClient) Recv(m *Message) error {
 	hras := metrics.NewTiming()
 	b, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
+		log.Printf("Transport client slow reads error %s", err.Error())
 		return err
 	}
 	hras.Send("micro.transport.http.recv.readall.time")
 	metrics.Gauge("micro.transport.http.recv.readall.length", len(b))
-
-	if time.Now().Sub(startTime).Seconds() > float64(2) {
-		log.Printf("Transport client slow reads (%d)", len(b))
-	}
+	log.Printf("Transport client slow reads (%d)", len(b))
 
 	if rsp.StatusCode != 200 {
 		return errors.New(rsp.Status + ": " + string(b))
