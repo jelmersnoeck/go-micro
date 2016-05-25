@@ -183,16 +183,8 @@ func (h *httpTransportClient) Recv(m *Message) error {
 	hras.Send("micro.transport.http.recv.readall.time")
 	metrics.Gauge("micro.transport.http.recv.readall.length", len(b))
 
-	log.Printf("Transport client slow reads(%d) body: %s", len(b), string(b))
-
 	if time.Now().Sub(startTime).Seconds() > float64(2) {
-		log.Printf("transport client slow reads status: %d", rsp.StatusCode)
-		bb, berr := ioutil.ReadAll(h.buff)
-		if berr != nil {
-			log.Printf("Transport client slow reads error: %s", berr.Error())
-		} else {
-			log.Printf("Transport client slow reads valid: %s", string(bb))
-		}
+		log.Printf("Transport client slow reads (%d)", len(b))
 	}
 
 	if rsp.StatusCode != 200 {
